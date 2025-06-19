@@ -36,7 +36,9 @@ app.get('/', (req, res) => {
 
 // Start server
 connectDB().then(() => {
+  console.log("Db connected");
+  
   app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
   });
 });

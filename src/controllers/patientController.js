@@ -6,23 +6,31 @@ exports.addPatient = async (req, res) => {
   try {
     const { name, age, condition } = req.body;
 
+    // Validate required fields
     if (!name || !age || !condition) {
-      return res.status(400).json({ error: "All fields are required: name, age, condition" });
+      return res.status(400).json({
+        error: "All fields are required: name, age, condition",
+      });
     }
 
-    const patient = new Patient({
+    const newPatient = new Patient({
       name,
       age,
       condition,
-      createdBy: req.user._id, // links to authenticated user
+      createdBy: req.user._id, // Associate with logged-in user
     });
 
-    await patient.save();
-    res.status(201).json({ message: "Patient added successfully", patient });
+    await newPatient.save();
+
+    res.status(201).json({
+      message: "Patient added successfully",
+      patient: newPatient,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Get all patients created by the authenticated user
 exports.getAllPatients = async (req, res) => {

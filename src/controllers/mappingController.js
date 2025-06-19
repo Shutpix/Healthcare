@@ -1,5 +1,5 @@
 // controllers/mappingController.js
-const Mapping = require('../models/Mapping');
+const Mapping = require('../models/mapping');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 
@@ -8,9 +8,11 @@ exports.assignDoctor = async (req, res) => {
   try {
     const { patientId, doctorId } = req.body;
 
-    // Optional: Validate existence of patient and doctor
-    const patient = await Patient.findById(patientId);
-    const doctor = await Doctor.findById(doctorId);
+    // Check if both patient and doctor exist
+    const [patient, doctor] = await Promise.all([
+      Patient.findById(patientId),
+      Doctor.findById(doctorId),
+    ]);
 
     if (!patient) {
       return res.status(404).json({ error: "Patient not found" });
@@ -20,14 +22,23 @@ exports.assignDoctor = async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    const mapping = new Mapping({ patientId, doctorId });
-    await mapping.save();
+    // Optional: Prevent duplicate assignments
+    const existing = await Mapping.findOne({ patientId, doctorId });
+    if (existing) {
+      return res.status(409).json({ error: "Doctor already assigned to this patient" });
+    }
 
-    res.status(201).json({ message: "Doctor assigned to patient", mapping });
+    const mapping = await Mapping.create({ patientId, doctorId });
+
+    res.status(201).json({
+      message: "✅ Doctor assigned to patient successfully",
+      mapping,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Get all mappings
 exports.getAllMappings = async (req, res) => {

@@ -1,8 +1,6 @@
-// controllers/doctorController.js
 const bcrypt = require("bcrypt");
 const Doctor = require("../models/Doctor");
 
-// Create a new doctor (authenticated users only)
 exports.addDoctor = async (req, res) => {
   try {
     const { name, email, password, specialization } = req.body;
@@ -11,7 +9,6 @@ exports.addDoctor = async (req, res) => {
       return res.status(400).json({ error: "Missing Credentials" });
     }
 
-    // ❗ FIX: await the query
     const findDoctor = await Doctor.findOne({ email: email });
     if (findDoctor) {
       return res.status(409).json({ error: "Doctor already exists" });
@@ -19,7 +16,6 @@ exports.addDoctor = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 👇 Assuming doctors are stored in a Doctor model, not User model
     const newDoctor = new Doctor({
       name,
       email,
@@ -46,6 +42,8 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
+
+
 // Get doctor by ID
 exports.getDoctorById = async (req, res) => {
   try {
@@ -61,16 +59,31 @@ exports.getDoctorById = async (req, res) => {
   }
 };
 
+
+
 // Update doctor details
 exports.updateDoctor = async (req, res) => {
   try {
-    const { name, specialization } = req.body;
+    const { specialization, password } = req.body;
 
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.params.id,
-      { name, specialization },
-      { new: true }
-    );
+    // Build update object
+    const update = {};
+
+    if (specialization) update.specialization = specialization;
+    if (password) update.password = await bcrypt.hash(password, 10);
+
+    if (req.body.name || req.body.email) {
+      return res.status(400).json({ error: "Name and email cannot be updated" });
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: "Nothing to update" });
+    }
+
+    const doctor = await Doctor.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!doctor) {
       return res.status(404).json({ error: "Doctor not found" });
@@ -82,17 +95,22 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
+
+
 // Delete doctor
 exports.deleteDoctor = async (req, res) => {
   try {
-    const doctor = await Doctor.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
 
-    if (!doctor) {
+    const deletedDoctor = await Doctor.findByIdAndDelete(id);
+
+    if (!deletedDoctor) {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    res.json({ message: "Doctor deleted" });
+    res.status(200).json({ message: "Doctor deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+

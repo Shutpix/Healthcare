@@ -10,7 +10,9 @@ const {
 } = require('../controllers/mappingController');
 
 // Assign a doctor to a patient (Authenticated)
+//router.post('/', userAuth, assignDoctor);
 router.post('/', userAuth, assignDoctor);
+
 
 // Get all patient-doctor mappings (Authenticated)
 router.get('/', userAuth, getAllMappings);

@@ -76,15 +76,21 @@ exports.updatePatient = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
+    // Prevent updating the name field
     const updates = req.body;
-    Object.assign(patient, updates);
+    if ('name' in updates) {
+      return res.status(400).json({ error: "You cannot update the patient's name" });
+    }
 
+    Object.assign(patient, updates);
     await patient.save();
+
     res.json({ message: "Patient updated", patient });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Delete a patient
 exports.deletePatient = async (req, res) => {
@@ -99,9 +105,10 @@ exports.deletePatient = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    await patient.remove();
+    await patient.deleteOne(); // safer for Mongoose v7+
     res.json({ message: "Patient deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
